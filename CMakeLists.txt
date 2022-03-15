@@ -13,8 +13,9 @@ add_executable(${TARGET_NAME}
 
 protobuf_generate(TARGET ${TARGET_NAME})
 
-target_link_libraries(${TARGET_NAME}
+target_link_libraries(${TARGET_NAME} 
   PUBLIC CONAN_PKG::protobuf
+  PUBLIC CONAN_PKG::cpprestsdk
 )
 
 target_include_directories(${TARGET_NAME}
