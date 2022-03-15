@@ -1,7 +1,9 @@
 [requires]
 protobuf/3.19.2
+cpprestsdk/2.10.18
 
 [options]
+CppRestSdk:shared=True # false
 
 [generators]
 cmake
