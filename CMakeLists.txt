@@ -7,7 +7,7 @@ conan_basic_setup(TARGETS KEEP_RPATHS)
 set(TARGET_NAME Service)
 
 add_executable(${TARGET_NAME}
-  Product.proto
+  Version.proto
   main.cpp
 )
 

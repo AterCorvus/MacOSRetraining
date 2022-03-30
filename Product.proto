@@ -1,7 +1,0 @@
-syntax = "proto3";
-
-package product_info;
-
-message Product {
-    string version = 1;
-}

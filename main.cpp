@@ -4,7 +4,8 @@
 #include <locale>
 #include <codecvt>
 
-#include "Product.pb.h"
+#include <google/protobuf/util/json_util.h>
+#include "Version.pb.h"
 #include "cpprest/http_listener.h"
 #include "cpprest/json.h"
 
@@ -14,42 +15,55 @@ using namespace web;
 using namespace web::http;
 using namespace web::http::experimental::listener;
 using namespace utility;
+using namespace google::protobuf::util;
 
-#define TRACE(msg) cout << msg
-#define TRACE_ACTION(a, k, v) cout << a << L" { " << k << L". " << v << L"}\n"
+struct Version{
+    static const int major = 1;
+    static const int minor = 0;
+    static const int patch = 0;
+};
 
-const string version = "0.0.1";
+void start_server() {
+    auto version = make_shared<product_info::Version>();
+    version->set_major(Version::major);
+    version->set_minor(Version::minor);
+    version->set_patch(Version::patch);
 
-void respond(const http_request& request, const status_code& status, const json::value& response)
-{
-    request.reply(status, response);
-}
-
-int main() {
-    product_info::Product product;
-    product.set_version(version);
-    
     http_listener listener(U("http://127.0.0.1:35248/version"));
 
-    listener.support(methods::GET, [&, product](http_request request){ 
-        std::wstring_convert<std::codecvt_utf8<wchar_t> > converter;
-        std::wstring response = converter.from_bytes(("version: ") + product.version());
-        respond(request, status_codes::OK, json::value::string(response));
+    listener.support(methods::GET, [weak_product = weak_ptr<product_info::Version>(version)](http_request request) {
+        auto version = weak_product.lock();
+        if (version) {
+            string response;
+            JsonPrintOptions options;
+            options.add_whitespace = true;
+            options.always_print_primitive_fields = true;
+            options.preserve_proto_field_names = true;
+            MessageToJsonString(*version, &response, options);
+            request.reply(status_codes::OK, response);
+        }
+        else {
+            request.reply(status_codes::InternalError);
+        }
         });
 
     try
     {
         listener
-        .open()
-        .then([&listener](){ TRACE("\nstarting to listen\n"); })
-        .wait();
+            .open()
+            .then([]() { cout << "starting to listen\n"; })
+            .wait();
 
         while (true);
     }
-    catch(const std::exception& e)
+    catch (const std::exception& e)
     {
-        std::cerr << e.what() << '\n';
+        cerr << e.what() << '\n';
     }
-    
+}
+
+int main() {
+    start_server();
+
     return 0;
 }
